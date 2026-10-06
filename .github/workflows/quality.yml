@@ -1,0 +1,54 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Start virtual audio output
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends pulseaudio pulseaudio-utils
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=ci_null
+          pactl set-default-sink ci_null
+      - name: Run release gate
+        run: |
+          mkdir -p output
+          set -o pipefail
+          npm run verify 2>&1 | tee output/verify.log
+      - name: Record release artifact hashes
+        if: success()
+        run: find build -type f -print0 | sort -z | xargs -0 sha256sum > output/build-sha256.txt
+      - name: Archive release evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: quality-evidence-${{ github.sha }}
+          path: |
+            coverage/
+            build/
+            output/build-sha256.txt
+            output/playwright/
+            output/verify.log
+          if-no-files-found: warn
+          retention-days: 30

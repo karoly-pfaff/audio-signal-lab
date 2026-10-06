@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'none'; connect-src 'self' ws://localhost:* ws://127.0.0.1:*; form-action 'none'; img-src 'self' blob: data:; media-src 'self' blob: data:; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:"
+    />
+    <link rel="icon" type="image/svg+xml" href="/audio-signal-lab.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audio Signal Lab</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/sources/main.tsx"></script>
+  </body>
+</html>
